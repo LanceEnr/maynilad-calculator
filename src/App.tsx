@@ -112,6 +112,8 @@ const WaterCalculator: React.FC = () => {
   );
 };
 
+
+
 const AnotherCalculator: React.FC = () => {
   const [roomReading, setRoomReading] = useState({ current: "", previous: "" });
   const [commonAreaReading, setCommonAreaReading] = useState({ current: "", previous: "" });
@@ -121,6 +123,10 @@ const AnotherCalculator: React.FC = () => {
   const [totalPax, setTotalPax] = useState("3");
   const [tenantPax, setTenantPax] = useState("2");
   const [internetCharge, setInternetCharge] = useState("250");
+  const [roomElectricityCost, setRoomElectricityCost] = useState(0);
+  const [commonAreaCost, setCommonAreaCost] = useState(0);
+  const [waterCost, setWaterCost] = useState(0);
+  const [internetCost, setInternetCost] = useState(0);
   const [totalDue, setTotalDue] = useState<number | null>(null);
 
   const calculateTotalDue = () => {
@@ -141,24 +147,25 @@ const AnotherCalculator: React.FC = () => {
       return;
     }
 
-    if (roomUsage < 0 || commonAreaUsage < 0 || waterUsage < 0) {
-      alert("Readings must not result in negative usage");
-      return;
-    }
+    const roomElectricityCostCalc = roomUsage * parseFloat(electricityRate);
+    const commonAreaCostCalc = (commonAreaUsage * parseFloat(electricityRate)) / totalPeople * tenantPeople;
+    const waterCostCalc = (waterUsage * parseFloat(waterRate)) / totalPeople * tenantPeople;
+    const internetCostCalc = tenantPeople * parseFloat(internetCharge);
 
-    const roomElectricityCost = roomUsage * parseFloat(electricityRate);
-    const commonAreaCost = (commonAreaUsage * parseFloat(electricityRate)) / totalPeople * tenantPeople;
-    const waterCost = (waterUsage * parseFloat(waterRate)) / totalPeople * tenantPeople;
-    const internetCost = tenantPeople * parseFloat(internetCharge);
+    const totalDueCalc = roomElectricityCostCalc + commonAreaCostCalc + waterCostCalc + internetCostCalc;
 
-    const totalAmountDue = roomElectricityCost + commonAreaCost + waterCost + internetCost;
-
-    setTotalDue(totalAmountDue);
+    setRoomElectricityCost(roomElectricityCostCalc);
+    setCommonAreaCost(commonAreaCostCalc);
+    setWaterCost(waterCostCalc);
+    setInternetCost(internetCostCalc);
+    setTotalDue(totalDueCalc);
   };
 
   return (
     <div className="card p-4 shadow-sm w-100" style={{ maxWidth: "500px" }}>
       <h2 className="card-title text-center mb-4">Monthly Tenant Due</h2>
+
+      {/* Room Electricity */}
       <div className="mb-3">
         <label className="form-label">Room Electricity Submeter:</label>
         <input
@@ -176,6 +183,8 @@ const AnotherCalculator: React.FC = () => {
           placeholder="Previous Reading"
         />
       </div>
+
+      {/* Common Area Electricity */}
       <div className="mb-3">
         <label className="form-label">Common Area Electricity Submeter:</label>
         <input
@@ -193,6 +202,8 @@ const AnotherCalculator: React.FC = () => {
           placeholder="Previous Reading"
         />
       </div>
+
+      {/* Water Meter */}
       <div className="mb-3">
         <label className="form-label">Water Meter:</label>
         <input
@@ -210,6 +221,8 @@ const AnotherCalculator: React.FC = () => {
           placeholder="Previous Reading"
         />
       </div>
+
+      {/* Rates and Charges */}
       <div className="mb-3">
         <label className="form-label">Electricity Rate (per kWh):</label>
         <input
@@ -255,11 +268,32 @@ const AnotherCalculator: React.FC = () => {
           className="form-control"
         />
       </div>
+
+      {/* Calculate Button */}
       <button onClick={calculateTotalDue} className="btn btn-primary w-100">
         Calculate Total Due
       </button>
+
+      {/* Breakdown of Fees */}
       {totalDue !== null && (
         <div className="mt-4">
+          <div className="mb-2">
+            <span className="fw-bold">Breakdown of Fees:</span>
+          </div>
+          <ul className="list-group mb-3">
+            <li className="list-group-item">
+              <span className="fw-bold">Room Electricity Cost:</span> {roomElectricityCost.toFixed(2)} PHP
+            </li>
+            <li className="list-group-item">
+              <span className="fw-bold">Common Area Electricity Cost:</span> {commonAreaCost.toFixed(2)} PHP
+            </li>
+            <li className="list-group-item">
+              <span className="fw-bold">Water Cost:</span> {waterCost.toFixed(2)} PHP
+            </li>
+            <li className="list-group-item">
+              <span className="fw-bold">Internet Cost:</span> {internetCost.toFixed(2)} PHP
+            </li>
+          </ul>
           <div className="mb-2">
             <span className="fw-bold">Total Amount Due:</span> {totalDue.toFixed(2)} PHP
           </div>
@@ -268,6 +302,9 @@ const AnotherCalculator: React.FC = () => {
     </div>
   );
 };
+
+
+
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState("water");
