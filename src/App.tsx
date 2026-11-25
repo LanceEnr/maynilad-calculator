@@ -1,9 +1,20 @@
 import React, { useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
+import MayniladBill, { type BillTarget } from "./MayniladBill";
 
-const WaterCalculator: React.FC = () => {
-  const [currentCharges, setCurrentCharges] = useState("");
-  const [rentSubmeter, setRentSubmeter] = useState("");
+interface WaterCalculatorProps {
+  currentCharges: string;
+  setCurrentCharges: (value: string) => void;
+  rentSubmeter: string;
+  setRentSubmeter: (value: string) => void;
+}
+
+const WaterCalculator: React.FC<WaterCalculatorProps> = ({
+  currentCharges,
+  setCurrentCharges,
+  rentSubmeter,
+  setRentSubmeter,
+}) => {
   const [firstFloorPeople, setFirstFloorPeople] = useState("3");
   const [secondFloorPeople, setSecondFloorPeople] = useState("5");
   const [perHeadCharge, setPerHeadCharge] = useState<number | null>(null);
@@ -308,24 +319,45 @@ const AnotherCalculator: React.FC = () => {
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState("water");
+  // Kept here so the Maynilad Bill tab can fill them in.
+  const [currentCharges, setCurrentCharges] = useState("");
+  const [rentSubmeter, setRentSubmeter] = useState("");
+
+  const handleMayniladTotal = (target: BillTarget, amount: string) => {
+    if (target === "currentCharges") setCurrentCharges(amount);
+    else setRentSubmeter(amount);
+    setActiveTab("water");
+  };
+
+  const tabs: [string, string][] = [
+    ["maynilad", "Maynilad Bill"],
+    ["water", "Water Calculator"],
+    ["another", "Tenant Due Calculator"],
+  ];
 
   return (
     <div className="d-flex flex-column align-items-center bg-light min-vh-100 py-4">
-      <div className="mb-3">
-        <button
-          className={`btn ${activeTab === "water" ? "btn-primary" : "btn-outline-primary"} me-2`}
-          onClick={() => setActiveTab("water")}
-        >
-          Water Calculator
-        </button>
-        <button
-          className={`btn ${activeTab === "another" ? "btn-primary" : "btn-outline-primary"}`}
-          onClick={() => setActiveTab("another")}
-        >
-          Tenant Due Calculator
-        </button>
+      <div className="mb-3 d-flex flex-wrap justify-content-center gap-2">
+        {tabs.map(([key, label]) => (
+          <button
+            key={key}
+            className={`btn ${activeTab === key ? "btn-primary" : "btn-outline-primary"}`}
+            onClick={() => setActiveTab(key)}
+          >
+            {label}
+          </button>
+        ))}
       </div>
-      {activeTab === "water" ? <WaterCalculator /> : <AnotherCalculator />}
+      {activeTab === "maynilad" && <MayniladBill onUseTotal={handleMayniladTotal} />}
+      {activeTab === "water" && (
+        <WaterCalculator
+          currentCharges={currentCharges}
+          setCurrentCharges={setCurrentCharges}
+          rentSubmeter={rentSubmeter}
+          setRentSubmeter={setRentSubmeter}
+        />
+      )}
+      {activeTab === "another" && <AnotherCalculator />}
     </div>
   );
 };
