@@ -16,6 +16,7 @@ interface Props {
   setSettings: (s: MayniladSettings) => void;
   consumption: string;
   setConsumption: (value: string) => void;
+  consumptionHint?: React.ReactNode;
 }
 
 const Select: React.FC<{
@@ -55,6 +56,7 @@ const MayniladBill: React.FC<Props> = ({
   setSettings,
   consumption,
   setConsumption,
+  consumptionHint,
 }) => {
   const set = (key: keyof MayniladSettings) => (value: string) =>
     setSettings({ ...settings, [key]: value });
@@ -133,6 +135,7 @@ const MayniladBill: React.FC<Props> = ({
         suffix="cu.m"
         placeholder="e.g. 25"
         inputMode="numeric"
+        hint={consumptionHint}
         error={consumptionError}
       />
 

@@ -5,7 +5,7 @@ import MayniladBill from "./MayniladBill";
 import TenantDue, { DEFAULT_TENANT, tenantWaterShare } from "./TenantDue";
 import WaterSplit, { DEFAULT_SPLIT } from "./WaterSplit";
 import { DEFAULT_SETTINGS, normalizeSettings } from "./maynilad";
-import { stringFields, useStoredState } from "./shared";
+import { num, stringFields, useStoredState } from "./shared";
 
 type Tab = "tenant" | "split" | "maynilad";
 
@@ -22,7 +22,30 @@ const App: React.FC = () => {
   const [settings, setSettings] = useStoredState("maynilad-bill-settings", DEFAULT_SETTINGS, normalizeSettings);
   const [tenant, setTenant] = useStoredState("rental.tenant", DEFAULT_TENANT, stringFields(DEFAULT_TENANT));
   const [split, setSplit] = useStoredState("rental.split", DEFAULT_SPLIT, stringFields(DEFAULT_SPLIT));
-  const [consumption, setConsumption] = useState("");
+  // Consumption follows the Tenant Due water meter unless typed over.
+  const [consumptionOverride, setConsumptionOverride] = useState<string | null>(null);
+  const waterPrev = num(tenant.waterPrevious);
+  const waterCur = num(tenant.waterCurrent);
+  const tenantWaterUse =
+    waterPrev !== null && waterCur !== null && waterCur >= waterPrev ? waterCur - waterPrev : null;
+  const consumption = consumptionOverride ?? (tenantWaterUse !== null ? String(tenantWaterUse) : "");
+  const consumptionHint =
+    tenantWaterUse === null ? (
+      "Fills in from the Tenant Due water meter once both readings are entered."
+    ) : consumptionOverride === null ? (
+      `From the Tenant Due water meter (${tenant.waterPrevious} → ${tenant.waterCurrent}).`
+    ) : (
+      <>
+        Typed in.{" "}
+        <button
+          type="button"
+          className="btn btn-link p-0 align-baseline"
+          onClick={() => setConsumptionOverride(null)}
+        >
+          Use the Tenant Due water meter ({tenantWaterUse} cu.m)
+        </button>
+      </>
+    );
 
   const active = TABS.find((t) => t.key === tab) ?? TABS[0];
 
@@ -68,7 +91,8 @@ const App: React.FC = () => {
             settings={settings}
             setSettings={setSettings}
             consumption={consumption}
-            setConsumption={setConsumption}
+            setConsumption={setConsumptionOverride}
+            consumptionHint={consumptionHint}
           />
         )}
       </main>
