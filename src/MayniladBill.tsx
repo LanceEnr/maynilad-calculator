@@ -5,6 +5,7 @@ import {
   METER_SIZES,
   RATES_AS_OF,
   SEWERAGE_OPTIONS,
+  YES_NO,
   calculateBill,
   type MayniladSettings,
 } from "./maynilad";
@@ -92,13 +93,33 @@ const MayniladBill: React.FC<Props> = ({
           />
         </div>
       </div>
+      {settings.customerType === "residential" && (
+        <div className="row g-2">
+          <div className="col-6">
+            <Select
+              label="Lifeline"
+              value={settings.lifeline}
+              onChange={set("lifeline")}
+              options={YES_NO}
+            />
+          </div>
+          <div className="col-6">
+            <Select
+              label="Senior citizen"
+              value={settings.senior}
+              onChange={set("senior")}
+              options={YES_NO}
+            />
+          </div>
+        </div>
+      )}
       <Select
         label="Meter size"
         value={settings.meterSize}
         onChange={set("meterSize")}
         options={METER_SIZES.map((m) => ({
           value: m.value,
-          label: `${m.label} · MSC ${peso(m.msc / 100)}`,
+          label: `${m.label} · MSC ${peso(m.msc)}`,
         }))}
         hint="Not sure? Match the MSC on your bill."
       />
@@ -124,6 +145,7 @@ const MayniladBill: React.FC<Props> = ({
           items={[
             { label: "Basic charge", amount: bill.basicCharge },
             { label: "FCDA", amount: bill.fcda },
+            ...(bill.seniorDiscount ? [{ label: "Senior citizen discount", amount: bill.seniorDiscount }] : []),
             { label: "Environmental charge", amount: bill.environmentalCharge },
             ...(bill.sewerCharge ? [{ label: "Sewer charge", amount: bill.sewerCharge }] : []),
             { label: "Maintenance service charge", amount: bill.msc },
