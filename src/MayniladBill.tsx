@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import {
   BUSINESS_AREAS,
   CUSTOMER_TYPES,
@@ -6,227 +6,167 @@ import {
   RATES_AS_OF,
   SEWERAGE_OPTIONS,
   calculateBill,
-  type CustomerType,
-  type Sewerage,
+  type MayniladSettings,
 } from "./maynilad";
+import { EmptyState, Field, Summary, num, peso } from "./shared";
 
 export type BillTarget = "currentCharges" | "rentSubmeter";
 
-interface Settings {
-  customerType: CustomerType;
-  sewerage: Sewerage;
-  meterSize: string;
-  businessArea: string;
-}
-
-const STORAGE_KEY = "maynilad-bill-settings";
-
-const DEFAULT_SETTINGS: Settings = {
-  customerType: "1",
-  sewerage: "0",
-  meterSize: "1",
-  businessArea: "",
-};
-
-// Remember the dropdowns between visits so only the cu.m needs typing.
-const loadSettings = (): Settings => {
-  try {
-    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "{}");
-    return {
-      customerType: CUSTOMER_TYPES.some((o) => o.value === saved.customerType)
-        ? saved.customerType
-        : DEFAULT_SETTINGS.customerType,
-      sewerage: SEWERAGE_OPTIONS.some((o) => o.value === saved.sewerage)
-        ? saved.sewerage
-        : DEFAULT_SETTINGS.sewerage,
-      meterSize: METER_SIZES.some((o) => o.value === saved.meterSize)
-        ? saved.meterSize
-        : DEFAULT_SETTINGS.meterSize,
-      businessArea: BUSINESS_AREAS.some((o) => o.value === saved.businessArea)
-        ? saved.businessArea
-        : DEFAULT_SETTINGS.businessArea,
-    };
-  } catch {
-    return DEFAULT_SETTINGS;
-  }
-};
-
-const peso = new Intl.NumberFormat("en-PH", {
-  style: "currency",
-  currency: "PHP",
-});
-
 interface Props {
+  settings: MayniladSettings;
+  setSettings: (s: MayniladSettings) => void;
+  consumption: string;
+  setConsumption: (value: string) => void;
   onUseTotal: (target: BillTarget, amount: string) => void;
 }
 
-const MayniladBill: React.FC<Props> = ({ onUseTotal }) => {
-  const [settings, setSettings] = useState<Settings>(loadSettings);
-  const [consumption, setConsumption] = useState("");
+const Select: React.FC<{
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: { value: string; label: string }[];
+  placeholder?: string;
+  hint?: string;
+}> = ({ label, value, onChange, options, placeholder, hint }) => (
+  <div className="mb-3">
+    <label className="form-label w-100 mb-0">
+      {label}
+      <select
+        className="form-select mt-2"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      >
+        {placeholder && (
+          <option value="" disabled>
+            {placeholder}
+          </option>
+        )}
+        {options.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+    </label>
+    {hint && <div className="form-text">{hint}</div>}
+  </div>
+);
 
-  useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
-    } catch {
-      // Storage can be unavailable (private browsing); the calculator still works.
-    }
-  }, [settings]);
+const MayniladBill: React.FC<Props> = ({
+  settings,
+  setSettings,
+  consumption,
+  setConsumption,
+  onUseTotal,
+}) => {
+  const set = (key: keyof MayniladSettings) => (value: string) =>
+    setSettings({ ...settings, [key]: value });
 
-  const update = (key: keyof Settings) => (e: React.ChangeEvent<HTMLSelectElement>) =>
-    setSettings({ ...settings, [key]: e.target.value });
-
-  const cuM = consumption.trim() === "" ? null : Number(consumption);
+  const cuM = num(consumption);
   const consumptionError =
-    cuM !== null && (!Number.isInteger(cuM) || cuM < 0)
-      ? "Enter whole cubic meters (e.g. 25)."
-      : null;
-
+    consumption.trim() !== "" && cuM === null
+      ? "Enter a number."
+      : cuM !== null && (!Number.isInteger(cuM) || cuM < 0)
+        ? "Maynilad bills whole cubic meters, e.g. 25."
+        : null;
   const bill =
-    cuM !== null && !consumptionError
-      ? calculateBill({ ...settings, consumption: cuM })
-      : null;
-
-  const rows: [string, number][] = bill
-    ? [
-        ["Basic Charge", bill.basicCharge],
-        ["FCDA", bill.fcda],
-        ["Environmental Charge", bill.environmentalCharge],
-        ["Sewer Charge", bill.sewerCharge],
-        ["MSC", bill.msc],
-        ["Government Taxes", bill.governmentTaxes],
-      ]
-    : [];
+    cuM !== null && !consumptionError ? calculateBill({ ...settings, consumption: cuM }) : null;
 
   return (
-    <div className="card p-4 shadow-sm w-100" style={{ maxWidth: "500px" }}>
-      <h2 className="card-title text-center mb-4">Maynilad Bill</h2>
-
-      <div className="mb-3">
-        <label className="form-label">Customer Type:</label>
-        <select
-          className="form-select"
-          value={settings.customerType}
-          onChange={update("customerType")}
-        >
-          {CUSTOMER_TYPES.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div className="mb-3">
-        <label className="form-label">Sewerage:</label>
-        <select
-          className="form-select"
-          value={settings.sewerage}
-          onChange={update("sewerage")}
-        >
-          {SEWERAGE_OPTIONS.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div className="mb-3">
-        <label className="form-label">Consumption (cu.m):</label>
-        <input
-          type="number"
-          inputMode="numeric"
-          min={0}
-          step={1}
-          value={consumption}
-          onChange={(e) => setConsumption(e.target.value)}
-          className={`form-control ${consumptionError ? "is-invalid" : ""}`}
-          placeholder="e.g. 25"
-        />
-        {consumptionError && (
-          <div className="invalid-feedback">{consumptionError}</div>
-        )}
-      </div>
-
-      <div className="mb-3">
-        <label className="form-label">Meter Size:</label>
-        <select
-          className="form-select"
-          value={settings.meterSize}
-          onChange={update("meterSize")}
-        >
-          {METER_SIZES.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label} (MSC {peso.format(o.msc / 100)})
-            </option>
-          ))}
-        </select>
-        <div className="form-text">
-          Not sure? Match the MSC on your bill to the amount in brackets.
+    <>
+      <div className="row g-2">
+        <div className="col-6">
+          <Select
+            label="Customer type"
+            value={settings.customerType}
+            onChange={set("customerType")}
+            options={CUSTOMER_TYPES}
+          />
+        </div>
+        <div className="col-6">
+          <Select
+            label="Sewerage"
+            value={settings.sewerage}
+            onChange={set("sewerage")}
+            options={SEWERAGE_OPTIONS}
+          />
         </div>
       </div>
+      <Select
+        label="Meter size"
+        value={settings.meterSize}
+        onChange={set("meterSize")}
+        options={METER_SIZES.map((m) => ({
+          value: m.value,
+          label: `${m.label} · MSC ${peso(m.msc / 100)}`,
+        }))}
+        hint="Not sure? Match the MSC on your bill."
+      />
+      <Select
+        label="Business area"
+        value={settings.businessArea}
+        onChange={set("businessArea")}
+        options={BUSINESS_AREAS}
+        placeholder="Select business area"
+      />
+      <Field
+        label="Consumption"
+        value={consumption}
+        onChange={setConsumption}
+        suffix="cu.m"
+        placeholder="e.g. 25"
+        inputMode="numeric"
+        error={consumptionError}
+      />
 
-      <div className="mb-3">
-        <label className="form-label">Business Area:</label>
-        <select
-          className="form-select"
-          value={settings.businessArea}
-          onChange={update("businessArea")}
+      {bill && cuM !== null ? (
+        <Summary
+          items={[
+            { label: "Basic charge", amount: bill.basicCharge },
+            { label: "FCDA", amount: bill.fcda },
+            { label: "Environmental charge", amount: bill.environmentalCharge },
+            ...(bill.sewerCharge ? [{ label: "Sewer charge", amount: bill.sewerCharge }] : []),
+            { label: "Maintenance service charge", amount: bill.msc },
+            { label: "Government taxes", amount: bill.governmentTaxes },
+          ]}
+          totalLabel="Estimated bill"
+          total={bill.total}
         >
-          <option value="" disabled>
-            Select business area
-          </option>
-          {BUSINESS_AREAS.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {bill && (
-        <div className="mt-2">
-          <ul className="list-group mb-3">
-            {rows.map(([label, amount]) => (
-              <li
-                key={label}
-                className="list-group-item d-flex justify-content-between"
-              >
-                <span>{label}</span>
-                <span>{peso.format(amount)}</span>
-              </li>
-            ))}
-            <li className="list-group-item d-flex justify-content-between fw-bold">
-              <span>TOTAL</span>
-              <span>{peso.format(bill.total)}</span>
-            </li>
-          </ul>
+          {cuM > 0 && (
+            <div className="summary-note">
+              That's <strong>{peso(bill.total / cuM)}</strong> per cu.m. Tenant Due works
+              this out for you from the water meter readings.
+            </div>
+          )}
+          <div className="summary-note mt-3 mb-2">Send this total to Water Split as:</div>
           <div className="d-flex gap-2">
             <button
-              className="btn btn-outline-primary flex-fill"
+              className="btn btn-outline-primary btn-sm flex-fill"
               onClick={() => onUseTotal("currentCharges", bill.total.toFixed(2))}
             >
-              Use as Current Charges
+              Current charges
             </button>
             <button
-              className="btn btn-outline-primary flex-fill"
+              className="btn btn-outline-primary btn-sm flex-fill"
               onClick={() => onUseTotal("rentSubmeter", bill.total.toFixed(2))}
             >
-              Use as Rent Submeter
+              Rent submeter
             </button>
           </div>
-        </div>
+        </Summary>
+      ) : (
+        <EmptyState>
+          {settings.businessArea
+            ? "Enter the consumption to see the bill."
+            : "Pick your business area, then enter the consumption."}
+        </EmptyState>
       )}
 
-      {!bill && !settings.businessArea && (
-        <div className="form-text">Pick a business area to see the bill.</div>
-      )}
-
-      <div className="form-text mt-3">
-        Estimate only; your actual Maynilad bill takes precedence. Rates as of{" "}
-        {RATES_AS_OF}.
-      </div>
-    </div>
+      <p className="fine-print">
+        Same rates as Maynilad's online calculator, as of {RATES_AS_OF}. This is an estimate;
+        your actual bill takes precedence.
+      </p>
+    </>
   );
 };
 

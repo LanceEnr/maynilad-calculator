@@ -181,3 +181,40 @@ export const calculateBill = (input: BillInput): BillBreakdown | null => {
     total: (subtotal + taxes) / 100,
   };
 };
+
+export interface MayniladSettings {
+  customerType: CustomerType;
+  sewerage: Sewerage;
+  meterSize: string;
+  businessArea: string;
+}
+
+export const DEFAULT_SETTINGS: MayniladSettings = {
+  customerType: "1",
+  sewerage: "0",
+  meterSize: "1",
+  businessArea: "",
+};
+
+/** Turns saved (possibly stale or hand-edited) settings into valid ones. */
+export const normalizeSettings = (raw: unknown): MayniladSettings => {
+  const saved = (raw ?? {}) as Record<string, unknown>;
+  const pick = <T extends string>(options: { value: T }[], value: unknown, fallback: T): T =>
+    options.find((o) => o.value === value)?.value ?? fallback;
+  return {
+    customerType: pick(CUSTOMER_TYPES, saved.customerType, DEFAULT_SETTINGS.customerType),
+    sewerage: pick(SEWERAGE_OPTIONS, saved.sewerage, DEFAULT_SETTINGS.sewerage),
+    meterSize: pick(METER_SIZES, saved.meterSize, DEFAULT_SETTINGS.meterSize),
+    businessArea: pick(BUSINESS_AREAS, saved.businessArea, DEFAULT_SETTINGS.businessArea),
+  };
+};
+
+/** Short description such as "Residential · Unsewered · North Quezon City BA". */
+export const describeSettings = (s: MayniladSettings): string =>
+  [
+    CUSTOMER_TYPES.find((o) => o.value === s.customerType)?.label,
+    SEWERAGE_OPTIONS.find((o) => o.value === s.sewerage)?.label,
+    BUSINESS_AREAS.find((o) => o.value === s.businessArea)?.label.replace(/ \(.*\)$/, ""),
+  ]
+    .filter(Boolean)
+    .join(" · ");
