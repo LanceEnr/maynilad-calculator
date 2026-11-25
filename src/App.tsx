@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./index.css";
 import MayniladBill from "./MayniladBill";
-import TenantDue, { DEFAULT_TENANT, tenantWaterShare } from "./TenantDue";
+import TenantDue, { DEFAULT_TENANT, waterMeterTotal } from "./TenantDue";
 import WaterSplit, { DEFAULT_SPLIT } from "./WaterSplit";
 import { DEFAULT_SETTINGS, normalizeSettings } from "./maynilad";
 import { num, stringFields, useStoredState } from "./shared";
@@ -82,7 +82,7 @@ const App: React.FC = () => {
           <WaterSplit
             inputs={split}
             setInputs={setSplit}
-            tenantWater={tenantWaterShare(tenant, settings)}
+            tenantWater={waterMeterTotal(tenant, settings)}
             onOpenTenant={() => setTab("tenant")}
           />
         )}

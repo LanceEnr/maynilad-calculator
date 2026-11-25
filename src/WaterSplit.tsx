@@ -20,7 +20,7 @@ export const DEFAULT_SPLIT: SplitInputs = {
 interface Props {
   inputs: SplitInputs;
   setInputs: (inputs: SplitInputs) => void;
-  /** The tenant's water share from Tenant Due, or null if it can't be worked out yet. */
+  /** The whole water meter's cost from Tenant Due, or null if it can't be worked out yet. */
   tenantWater: number | null;
   onOpenTenant: () => void;
 }
@@ -81,7 +81,7 @@ const WaterSplit: React.FC<Props> = ({ inputs, setInputs, tenantWater, onOpenTen
           <span className="input-group-text">₱</span>
           {fromTenant ? (
             <output className="form-control bg-body-tertiary">
-              {tenantWater !== null ? qty(tenantWater, 2) : "—"}
+              {tenantWater !== null ? tenantWater.toLocaleString("en-PH", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "—"}
             </output>
           ) : (
             <input
@@ -98,7 +98,7 @@ const WaterSplit: React.FC<Props> = ({ inputs, setInputs, tenantWater, onOpenTen
         <div className="form-text">
           {fromTenant ? (
             <>
-              The tenant's water share from{" "}
+              Water meter cost for all pax from{" "}
               <button type="button" className="btn btn-link p-0 align-baseline" onClick={onOpenTenant}>
                 Tenant Due
               </button>

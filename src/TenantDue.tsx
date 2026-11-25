@@ -55,6 +55,13 @@ const waterRateFor = (inputs: TenantInputs, settings: MayniladSettings): number 
   return bill ? bill.total / waterUse : null;
 };
 
+/** The whole water meter's cost for all pax (cu.m used × rate); Water Split's rent submeter. */
+export const waterMeterTotal = (inputs: TenantInputs, settings: MayniladSettings): number | null => {
+  const waterUse = usage(inputs.waterPrevious, inputs.waterCurrent);
+  const rate = waterRateFor(inputs, settings);
+  return waterUse === null || rate === null ? null : waterUse * rate;
+};
+
 /** The tenant's share of the water (cu.m used × rate × tenant pax ÷ total pax). */
 export const tenantWaterShare = (inputs: TenantInputs, settings: MayniladSettings): number | null => {
   const waterUse = usage(inputs.waterPrevious, inputs.waterCurrent);
