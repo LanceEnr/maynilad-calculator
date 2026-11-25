@@ -202,7 +202,7 @@ export const DEFAULT_SETTINGS: MayniladSettings = {
   lifeline: "0",
   senior: "0",
   meterSize: "1",
-  businessArea: "",
+  businessArea: "MNL",
 };
 
 /** Turns saved (possibly stale or hand-edited) settings into valid ones. */
