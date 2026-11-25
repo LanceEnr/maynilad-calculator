@@ -288,7 +288,7 @@ const TenantDue: React.FC<Props> = ({ inputs, setInputs, mayniladSettings, onEdi
       </div>
 
       {items ? (
-        <Summary items={items} totalLabel="Total due" total={total}>
+        <Summary items={items} totalLabel="Total due" total={total} highlightTotal>
           <div className="d-flex gap-2 mt-3">
             <button type="button" className="btn btn-outline-primary btn-sm flex-fill" onClick={copySummary}>
               {copied ? "Copied" : "Copy summary"}

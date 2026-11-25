@@ -104,3 +104,17 @@ body {
 .summary-note { color: var(--muted); font-size: 0.85rem; margin-top: 0.5rem; }
 
 .fine-print { color: var(--muted); font-size: 0.8rem; margin: 1rem 0 0; }
+
+/* The key number of a result */
+.summary-row.highlight,
+.summary-total.highlight {
+  background: #e8f0fe;
+  border: 1px solid #c6d8fb;
+  border-radius: 10px;
+  color: #0b3d91;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+}
+.summary-row.highlight { font-weight: 600; margin: 0.25rem 0; }
+.summary-row.highlight .summary-detail { color: #3d5f9e; font-weight: 400; }
+.summary-total.highlight { margin-top: 0.75rem; padding-top: 0.6rem; padding-bottom: 0.6rem; }

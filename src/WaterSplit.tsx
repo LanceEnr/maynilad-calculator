@@ -134,7 +134,7 @@ const WaterSplit: React.FC<Props> = ({ inputs, setInputs, tenantWater, onOpenTen
         <Summary
           items={[
             { label: "1st floor share", detail: `${qty(first)} × ${peso(perHead)}`, amount: perHead * first },
-            { label: "2nd floor share", detail: `${qty(second)} × ${peso(perHead)}`, amount: perHead * second },
+            { label: "2nd floor share", detail: `${qty(second)} × ${peso(perHead)}`, amount: perHead * second, highlight: true },
           ]}
           totalLabel="Per head"
           total={perHead}

@@ -172,6 +172,8 @@ export interface LineItem {
   label: string;
   detail?: string;
   amount: number;
+  /** Shows this line as the key number of the result. */
+  highlight?: boolean;
 }
 
 /** The result panel: line items and a highlighted total. */
@@ -179,12 +181,14 @@ export const Summary: React.FC<{
   items: LineItem[];
   totalLabel: string;
   total: number;
+  /** Shows the total as the key number of the result. */
+  highlightTotal?: boolean;
   children?: React.ReactNode;
-}> = ({ items, totalLabel, total, children }) => (
+}> = ({ items, totalLabel, total, highlightTotal, children }) => (
   <section className="summary" aria-live="polite">
     <ul className="list-unstyled mb-0">
       {items.map((item) => (
-        <li key={item.label} className="summary-row">
+        <li key={item.label} className={`summary-row ${item.highlight ? "highlight" : ""}`}>
           <div>
             <div>{item.label}</div>
             {item.detail && <div className="summary-detail">{item.detail}</div>}
@@ -193,7 +197,7 @@ export const Summary: React.FC<{
         </li>
       ))}
     </ul>
-    <div className="summary-total">
+    <div className={`summary-total ${highlightTotal ? "highlight" : ""}`}>
       <span>{totalLabel}</span>
       <span>{peso(total)}</span>
     </div>
