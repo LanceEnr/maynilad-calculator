@@ -45,6 +45,26 @@ const usage = (previous: string, current: string): number | null => {
   return p !== null && c !== null && c >= p ? c - p : null;
 };
 
+/** Water rate per cu.m: Maynilad's bill for the whole meter ÷ cu.m used, or the manual rate. */
+const waterRateFor = (inputs: TenantInputs, settings: MayniladSettings): number | null => {
+  if (inputs.waterRateMode === "manual") return num(inputs.manualWaterRate);
+  const waterUse = usage(inputs.waterPrevious, inputs.waterCurrent);
+  if (!settings.businessArea || waterUse === null || !Number.isInteger(waterUse)) return null;
+  if (waterUse === 0) return 0;
+  const bill = calculateBill({ ...settings, consumption: waterUse });
+  return bill ? bill.total / waterUse : null;
+};
+
+/** The tenant's share of the water (cu.m used × rate × tenant pax ÷ total pax). */
+export const tenantWaterShare = (inputs: TenantInputs, settings: MayniladSettings): number | null => {
+  const waterUse = usage(inputs.waterPrevious, inputs.waterCurrent);
+  const rate = waterRateFor(inputs, settings);
+  const totalPax = num(inputs.totalPax);
+  const tenantPax = num(inputs.tenantPax);
+  if (waterUse === null || rate === null || !totalPax || tenantPax === null) return null;
+  return (waterUse * rate * tenantPax) / totalPax;
+};
+
 const TenantDue: React.FC<Props> = ({ inputs, setInputs, mayniladSettings, onEditMaynilad }) => {
   const [copied, setCopied] = useState(false);
   const set = (key: keyof TenantInputs) => (value: string) =>
@@ -121,7 +141,7 @@ const TenantDue: React.FC<Props> = ({ inputs, setInputs, mayniladSettings, onEdi
     items = [
       { label: "Room electricity", detail: `${qty(roomUse)} kWh × ${peso(elecRate)}`, amount: roomUse * elecRate },
       { label: "Common area electricity", detail: `${qty(commonUse)} kWh × ${peso(elecRate)} · ${pax}`, amount: commonUse * elecRate * share },
-      { label: "Water", detail: `${qty(waterUse)} cu.m × ${peso(waterRate)} · ${pax}`, amount: waterUse * waterRate * share },
+      { label: "Water", detail: `${qty(waterUse)} cu.m × ${peso(waterRate)} · ${pax}`, amount: tenantWaterShare(inputs, mayniladSettings) ?? waterUse * waterRate * share },
       { label: "Internet", detail: `${qty(tenantPax)} × ${peso(internet)}`, amount: tenantPax * internet },
     ];
   }

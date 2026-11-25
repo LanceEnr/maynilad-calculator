@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./index.css";
-import MayniladBill, { type BillTarget } from "./MayniladBill";
-import TenantDue, { DEFAULT_TENANT } from "./TenantDue";
+import MayniladBill from "./MayniladBill";
+import TenantDue, { DEFAULT_TENANT, tenantWaterShare } from "./TenantDue";
 import WaterSplit, { DEFAULT_SPLIT } from "./WaterSplit";
 import { DEFAULT_SETTINGS, normalizeSettings } from "./maynilad";
 import { stringFields, useStoredState } from "./shared";
@@ -23,11 +23,6 @@ const App: React.FC = () => {
   const [tenant, setTenant] = useStoredState("rental.tenant", DEFAULT_TENANT, stringFields(DEFAULT_TENANT));
   const [split, setSplit] = useStoredState("rental.split", DEFAULT_SPLIT, stringFields(DEFAULT_SPLIT));
   const [consumption, setConsumption] = useState("");
-
-  const handleMayniladTotal = (target: BillTarget, amount: string) => {
-    setSplit({ ...split, [target]: amount });
-    setTab("split");
-  };
 
   const active = TABS.find((t) => t.key === tab) ?? TABS[0];
 
@@ -60,14 +55,20 @@ const App: React.FC = () => {
             onEditMaynilad={() => setTab("maynilad")}
           />
         )}
-        {tab === "split" && <WaterSplit inputs={split} setInputs={setSplit} />}
+        {tab === "split" && (
+          <WaterSplit
+            inputs={split}
+            setInputs={setSplit}
+            tenantWater={tenantWaterShare(tenant, settings)}
+            onOpenTenant={() => setTab("tenant")}
+          />
+        )}
         {tab === "maynilad" && (
           <MayniladBill
             settings={settings}
             setSettings={setSettings}
             consumption={consumption}
             setConsumption={setConsumption}
-            onUseTotal={handleMayniladTotal}
           />
         )}
       </main>

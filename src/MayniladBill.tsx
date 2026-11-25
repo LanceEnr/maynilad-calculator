@@ -11,14 +11,11 @@ import {
 } from "./maynilad";
 import { EmptyState, Field, Summary, num, peso } from "./shared";
 
-export type BillTarget = "currentCharges" | "rentSubmeter";
-
 interface Props {
   settings: MayniladSettings;
   setSettings: (s: MayniladSettings) => void;
   consumption: string;
   setConsumption: (value: string) => void;
-  onUseTotal: (target: BillTarget, amount: string) => void;
 }
 
 const Select: React.FC<{
@@ -58,7 +55,6 @@ const MayniladBill: React.FC<Props> = ({
   setSettings,
   consumption,
   setConsumption,
-  onUseTotal,
 }) => {
   const set = (key: keyof MayniladSettings) => (value: string) =>
     setSettings({ ...settings, [key]: value });
@@ -160,21 +156,6 @@ const MayniladBill: React.FC<Props> = ({
               this out for you from the water meter readings.
             </div>
           )}
-          <div className="summary-note mt-3 mb-2">Send this total to Water Split as:</div>
-          <div className="d-flex gap-2">
-            <button
-              className="btn btn-outline-primary btn-sm flex-fill"
-              onClick={() => onUseTotal("currentCharges", bill.total.toFixed(2))}
-            >
-              Current charges
-            </button>
-            <button
-              className="btn btn-outline-primary btn-sm flex-fill"
-              onClick={() => onUseTotal("rentSubmeter", bill.total.toFixed(2))}
-            >
-              Rent submeter
-            </button>
-          </div>
         </Summary>
       ) : (
         <EmptyState>
